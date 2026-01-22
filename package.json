@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "@supabase-js/source": "github:supabase/supabase-js",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "supabase": "^2.65.6"
   }
 }
