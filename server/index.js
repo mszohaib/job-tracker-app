@@ -83,4 +83,25 @@ app.post("/api/login", async (req, res) => {
     ? res.status(401).json({ message: "invalid credentials" })
     : res.status(200).json({ message: "Login success" });
 });
+//Create Jobs api Route
+app.post("/api/jobs", async (req, res) => {
+  // Get the req.body details
+  const { company, role, status } = req.body;
+  //Check for field missing
+  if (!company || !role || !status) {
+    return res.status(500).json({ error: "Missing Field" });
+  }
+  // Insert the job into the database
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert({ company, role, status });
+    if (error) {
+      return res.status(500).json({ error: "Server Error" });
+    }
+    return res.status(200).json({ message: "Job created Successfully!" });
+  } catch (error) {
+    return res.status(500).json({ error: "Server Error" });
+  }
+});
 app.listen(PORT, () => console.log(`Server has started at ${PORT}`));
