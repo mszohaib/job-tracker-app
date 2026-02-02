@@ -55,5 +55,32 @@ app.post("/api/register", async (req, res) => {
     .status(201)
     .json({ message: "The user is saved perfectly fine !!!" });
 });
+// User Login Route
 // Server listening on ---
+app.post("/api/login", async (req, res) => {
+  // Requsting names
+  const email = req.body.email;
+  const password = req.body.password;
+  //Check email and pass
+  if (!email || !password) {
+    return res.status(400).json({ message: "Missing Fields" });
+  }
+  // find user in db by email
+  const { data, error } = await supabase
+    .from("users")
+    .select("id,email, password_hash")
+    .eq("email", email);
+
+  if (error) {
+    return res.status(500).json({ message: `There is an error ${error}` });
+  }
+  if (data.length === 0) {
+    return res.status(401).json({ message: "Invalid credentials!" });
+  }
+  //Compare the passwords with hash passwords
+  const isMatch = await bcrypt.compare(password, data[0].password_hash);
+  !isMatch
+    ? res.status(401).json({ message: "invalid credentials" })
+    : res.status(200).json({ message: "Login success" });
+});
 app.listen(PORT, () => console.log(`Server has started at ${PORT}`));
