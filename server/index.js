@@ -104,4 +104,44 @@ app.post("/api/jobs", async (req, res) => {
     return res.status(500).json({ error: "Server Error" });
   }
 });
+//Create get route for jobs
+app.get("/api/jobs", async (req, res) => {
+  //Query the supabase with try catch method to avoid server crashing
+  try {
+    // The query
+    const { data, error } = await supabase.from("jobs").select("*");
+    console.log(data);
+    if (error) {
+      return res.status(500).json({ error: "Server Error" });
+    }
+    return res.status(200).json({ message: "The returned data,", data });
+  } catch (error) {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+// Updating the jobs if there any changes in it
+app.put("/api/jobs/:id", async (req, res) => {
+  // Get the inputs
+  const { company, role, status } = req.body;
+  const jobsId = req.params.id;
+  // Validate the inputs we get form client
+  if (!company || !role || !status) {
+    return res.status(400).json({ error: "Missing fields" });
+  }
+  // Query the supabase for updating it
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .update({ company, role, status })
+      .eq("id", jobsId)
+      .select();
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "No Matching Id." });
+    }
+    return res.status(200).json({ message: "Job updated sucessfully", data });
+  } catch (error) {
+    return res.status(500).json({ error: "Error" });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server has started at ${PORT}`));
