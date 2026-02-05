@@ -104,21 +104,21 @@ app.post("/api/jobs", async (req, res) => {
     return res.status(500).json({ error: "Server Error" });
   }
 });
-//Create get route for jobs
-app.get("/api/jobs", async (req, res) => {
-  //Query the supabase with try catch method to avoid server crashing
-  try {
-    // The query
-    const { data, error } = await supabase.from("jobs").select("*");
-    console.log(data);
-    if (error) {
-      return res.status(500).json({ error: "Server Error" });
-    }
-    return res.status(200).json({ message: "The returned data,", data });
-  } catch (error) {
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+// //Create get route for jobs to read the get it from server
+// app.get("/api/jobs", async (req, res) => {
+//   //Query the supabase with try catch method to avoid server crashing
+//   try {
+//     // The query
+//     const { data, error } = await supabase.from("jobs").select("*");
+//     console.log(data);
+//     if (error) {
+//       return res.status(500).json({ error: "Server Error" });
+//     }
+//     return res.status(200).json({ message: "The returned data,", data });
+//   } catch (error) {
+//     return res.status(500).json({ error: "Server error" });
+//   }
+// });
 // Updating the jobs if there any changes in it
 app.put("/api/jobs/:id", async (req, res) => {
   // Get the inputs
@@ -143,5 +143,56 @@ app.put("/api/jobs/:id", async (req, res) => {
     return res.status(500).json({ error: "Error" });
   }
 });
-
+// Creating the Delete route api
+app.delete("/api/jobs/:id", async (req, res) => {
+  //Get the id from th url user entered
+  const jobId = req.params.id;
+  if (!jobId) {
+    return res.status(400).json({ error: "Missing the Job Id" });
+  }
+  try {
+    // Run the query in the try method if a server crash happens its responds and only delete what the user said it
+    const { data, error } = await supabase
+      .from("jobs")
+      .delete()
+      .eq("id", jobId)
+      .select();
+    if (error) {
+      return res.status(500).json({ error: "There is an error", error });
+    }
+    // To see if data is empty or not
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "Job ID not found to be deleted!" });
+    }
+    // if success
+    return res
+      .status(200)
+      .json({ message: "This is what has been deleted:- ", data });
+  } catch (error) {
+    return res.status(500).json({ error: "There is an error", error });
+  }
+});
+//Adding the filtering job status and give only active jobs
+app.get("/api/jobs", async (req, res) => {
+  const { status } = req.query;
+  try {
+    // Get all the jobs first from the db
+    let query = supabase.from("jobs").select("*");
+    // If there is status applied
+    if (status) {
+      query = query.eq("status", status);
+    }
+    // Query execuetion time below
+    const { data, error } = await query;
+    // if any error here
+    if (error) {
+      console.log("Supabase error:", error);
+      return res.status(500).json({ error: "Server Error" });
+    }
+    // Returning the data filtered/unfiletered data
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: "Server Error", error });
+  }
+});
 app.listen(PORT, () => console.log(`Server has started at ${PORT}`));
