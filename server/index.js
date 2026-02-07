@@ -1,12 +1,16 @@
 // Importing pool mutiple db connections to get the data from the db.
 const { supabase } = require("./connections/supabase.js");
-//import hashing pass package
+//import hashing pass packagen
 const bcrypt = require("bcrypt");
 const PORT = 5000;
 // importing express lib
 const express = require("express");
-// middleware
+// Adding the backend to connect with front cors
+const cors = require("cors");
+// middlewares
 const app = express();
+// Applying CORS middleware
+app.use(cors());
 // Applying the text to json converter to every request recived
 app.use(express.json());
 
@@ -104,21 +108,6 @@ app.post("/api/jobs", async (req, res) => {
     return res.status(500).json({ error: "Server Error" });
   }
 });
-// //Create get route for jobs to read the get it from server
-// app.get("/api/jobs", async (req, res) => {
-//   //Query the supabase with try catch method to avoid server crashing
-//   try {
-//     // The query
-//     const { data, error } = await supabase.from("jobs").select("*");
-//     console.log(data);
-//     if (error) {
-//       return res.status(500).json({ error: "Server Error" });
-//     }
-//     return res.status(200).json({ message: "The returned data,", data });
-//   } catch (error) {
-//     return res.status(500).json({ error: "Server error" });
-//   }
-// });
 // Updating the jobs if there any changes in it
 app.put("/api/jobs/:id", async (req, res) => {
   // Get the inputs
