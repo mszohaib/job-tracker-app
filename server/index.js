@@ -90,20 +90,22 @@ app.post("/api/login", async (req, res) => {
 //Create Jobs api Route
 app.post("/api/jobs", async (req, res) => {
   // Get the req.body details
-  const { company, role, status } = req.body;
+  const { company, role, status, applicationDate, notes } = req.body;
   //Check for field missing
   if (!company || !role || !status) {
     return res.status(500).json({ error: "Missing Field" });
   }
-  // Insert the job into the database
+  // Insert the job details only into the database
   try {
     const { data, error } = await supabase
       .from("jobs")
-      .insert({ company, role, status });
+      .insert({ company, role, status, applicationDate, notes });
     if (error) {
-      return res.status(500).json({ error: "Server Error" });
+      return res.status(400).json({ error: error.message });
     }
-    return res.status(200).json({ message: "Job created Successfully!" });
+    return res
+      .status(200)
+      .json({ message: "Job created Successfully!,Check db" });
   } catch (error) {
     return res.status(500).json({ error: "Server Error" });
   }
@@ -111,7 +113,7 @@ app.post("/api/jobs", async (req, res) => {
 // Updating the jobs if there any changes in it
 app.put("/api/jobs/:id", async (req, res) => {
   // Get the inputs
-  const { company, role, status } = req.body;
+  const { company, role, status, applicationDate, notes } = req.body;
   const jobsId = req.params.id;
   // Validate the inputs we get form client
   if (!company || !role || !status) {
@@ -121,7 +123,7 @@ app.put("/api/jobs/:id", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("jobs")
-      .update({ company, role, status })
+      .update({ company, role, status, applicationDate, notes })
       .eq("id", jobsId)
       .select();
     if (!data || data.length === 0) {
