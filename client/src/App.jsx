@@ -12,9 +12,18 @@ function App() {
   const [status, setStatus] = useState("Applied");
   const [applicationDate, setApplicationDate] = useState("");
   const [notes, setNotes] = useState("");
+  // Create states for the Update jobs
+  const [editingId, setEditingId] = useState(null);
+  const [editCompany, setEditCompany] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editStatus, setEditStatus] = useState("Applied");
+  const [editApplicationDate, setEditApplicationDate] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   // Getting the jobs function
   const fetchJobs = async () => {
+    setLoading(true);
+    setError("");
     try {
       // To choose which url to call based on request
       const getJobs = "http://localhost:5000/api/jobs";
@@ -82,6 +91,49 @@ function App() {
     setApplicationDate("");
     setNotes("");
   };
+  // Create the update for the jobs functions
+  // Start edit function which sees which job to edit in short
+  const startEdit = (job) => {
+    // Put all the value to store the current jobs details
+    setEditingId(job.id);
+    setEditCompany(job.company);
+    setEditRole(job.role);
+    setEditStatus(job.status);
+    setEditApplicationDate(job.applicationDate?.slice(0, 10) || "");
+    setEditNotes(job.notes || "");
+  };
+  // Saving the jobs details
+  const handleUpdateJob = async (event) => {
+    // Stop refershing from changing the data itself
+    event.preventDefault();
+    // Get the response from backend
+    const response = fetch(`http://localhost:5000/api/jobs/${editingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        company: editCompany,
+        role: editRole,
+        status: editStatus,
+        applicationDate: editApplicationDate,
+        notes: editNotes,
+      }),
+    });
+    if (!response.ok) {
+      alert("Update failed");
+      return;
+    }
+    // Get the data from the backend for using it in the frontend
+    const updatedJob = await response.json();
+    //Getting the prev data from state and matching it with the id from the user to edit
+    setJobs((prev) =>
+      prev.map((job) => (job.id === editingId ? updatedJob : job)),
+    );
+    setEditingId(null);
+  };
+  // Set the cance button to remove the edit button
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
   // Calling the function when the page loads when the status changes
   useEffect(() => {
     fetchJobs();
@@ -113,22 +165,66 @@ function App() {
           <option value="Offer">Offer</option>
         </select>
       </label>
-      {/* Adding the job details below */}
+      {/* Adding the job details below- Add,Edit/Update,Delete button */}
       {jobs.length === 0 ? (
         <p>No jobs found.</p>
       ) : (
         <ul>
+          {/* For one item in the job only */}
           {jobs.map((job) => (
             <li key={job.id}>
+              {/* Jobs display */}
               <strong>{job.company}</strong> — {job.role} ({job.status})
+              {/* Delete button */}
               <button className="delBtn" onClick={() => handleDelete(job.id)}>
                 Delete
               </button>
+              {/* Update UI */}
+              <button onClick={() => startEdit(job)}>Edit</button>
+              {editingId === job.id && (
+                <form onSubmit={handleUpdateJob} style={{ marginTop: "10px" }}>
+                  <input
+                    value={editCompany}
+                    onChange={(e) => setEditCompany(e.target.value)}
+                  />
+
+                  <input
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                  />
+
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                  >
+                    <option>Applied</option>
+                    <option>Interviewing</option>
+                    <option>Rejected</option>
+                    <option>Offer</option>
+                  </select>
+
+                  <input
+                    type="date"
+                    value={editApplicationDate}
+                    onChange={(e) => setEditApplicationDate(e.target.value)}
+                  />
+
+                  <textarea
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                  />
+
+                  <button type="submit">Save</button>
+                  <button type="button" onClick={cancelEdit}>
+                    Cancel
+                  </button>
+                </form>
+              )}
             </li>
           ))}
         </ul>
       )}
-      {/* Adding the add job functionality only below*/}
+      {/* Adding the add job functionality  below*/}
       <form onSubmit={handleAddJob}>
         <input
           placeholder="Company"
@@ -165,4 +261,5 @@ function App() {
     </div>
   );
 }
+
 export default App;

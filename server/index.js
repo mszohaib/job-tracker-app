@@ -123,7 +123,7 @@ app.put("/api/jobs/:id", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("jobs")
-      .update({ company, role, status, applicationDate, notes })
+      .update({ id, company, role, status, applicationDate, notes })
       .eq("id", jobsId)
       .select();
     if (!data || data.length === 0) {
