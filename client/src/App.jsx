@@ -37,7 +37,12 @@ function App() {
       }
 
       const data = await response.json();
-      setJobs(data);
+      console.log(data);
+      // Sorting the jobs based on the dates only
+      const sorted = [...data].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
+      setJobs(sorted);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,7 +74,7 @@ function App() {
     const response = await fetch("http://localhost:5000/api/jobs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stingify({
+      body: JSON.stringify({
         company,
         role,
         status,
@@ -77,14 +82,16 @@ function App() {
         notes,
       }),
     });
-    // checkin for error
-    if (!response.ok) return alert("Failed to create Jobs!");
     // Response from the server/backend to frontend
     const newJob = await response.json();
+    // checkin for error
+    if (!response.ok) {
+      console.log("Add function error:-", newJob);
+      return alert(newJob?.error || "Failed to create job");
+    }
     //Update the state with the new job added by user
-    setJobs((previousJobs) => [newJob, ...previousJobs]);
-    // Clear the value for the other ones
-    // clear form
+    await fetchJobs(); // refresh from DB instead
+
     setCompany("");
     setRole("");
     setStatus("Applied");
@@ -107,17 +114,20 @@ function App() {
     // Stop refershing from changing the data itself
     event.preventDefault();
     // Get the response from backend
-    const response = fetch(`http://localhost:5000/api/jobs/${editingId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        company: editCompany,
-        role: editRole,
-        status: editStatus,
-        applicationDate: editApplicationDate,
-        notes: editNotes,
-      }),
-    });
+    const response = await fetch(
+      `http://localhost:5000/api/jobs/${editingId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company: editCompany,
+          role: editRole,
+          status: editStatus,
+          applicationDate: editApplicationDate,
+          notes: editNotes,
+        }),
+      },
+    );
     if (!response.ok) {
       alert("Update failed");
       return;
@@ -143,121 +153,193 @@ function App() {
   if (error) return <p>Error: {error}</p>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>My Job Applications</h2>
-      {/* Add the dropdown status menu bar only below */}
-      <label>
-        {/* Create the dropdown menu */}
-        Filter by status: {""}
-        <select
-          value={statusFilter}
-          // e= event represents what the user clicked on then what to do next yeah
-          onChange={(e) => {
-            setLoading(true);
-            setStatusFilter(e.target.value);
-          }}
-        >
-          {/* Giving the opttions that the user needs and actually shows thats it */}
-          <option value="All">All</option>
-          <option value="Applied">Applied</option>
-          <option value="Interviewing">Interviewing</option>
-          <option value="Rejected">Rejected</option>
-          <option value="Offer">Offer</option>
-        </select>
-      </label>
-      {/* Adding the job details below- Add,Edit/Update,Delete button */}
-      {jobs.length === 0 ? (
-        <p>No jobs found.</p>
-      ) : (
-        <ul>
-          {/* For one item in the job only */}
-          {jobs.map((job) => (
-            <li key={job.id}>
-              {/* Jobs display */}
-              <strong>{job.company}</strong> — {job.role} ({job.status})
-              {/* Delete button */}
-              <button className="delBtn" onClick={() => handleDelete(job.id)}>
-                Delete
-              </button>
-              {/* Update UI */}
-              <button onClick={() => startEdit(job)}>Edit</button>
-              {editingId === job.id && (
-                <form onSubmit={handleUpdateJob} style={{ marginTop: "10px" }}>
-                  <input
-                    value={editCompany}
-                    onChange={(e) => setEditCompany(e.target.value)}
-                  />
-
-                  <input
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value)}
-                  />
-
-                  <select
-                    value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value)}
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="mx-auto max-w-4xl p-6 space-y-6">
+        {/* Header */}
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold">My Job Applications</h2>
+          <p className="text-sm text-slate-600">
+            Track, update and manage your applications.
+          </p>
+        </div>
+        {/* Add the dropdown status menu bar only below */}
+        <div className="rounded-2xl bg-white p-4 shadow-sm border flex items-center justify-between gap-4">
+          {/* Create the dropdown menu */}
+          <span className="text-sm font-medium">Filter by status</span>
+          <select
+            className="w-48 rounded-lg border p-2"
+            value={statusFilter}
+            // e= event represents what the user clicked on then what to do next yeah
+            onChange={(e) => {
+              setLoading(true);
+              setStatusFilter(e.target.value);
+            }}
+          >
+            {/* Giving the opttions that the user needs and actually shows thats it */}
+            <option value="All">All</option>
+            <option value="Applied">Applied</option>
+            <option value="Interviewing">Interviewing</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Offer">Offer</option>
+          </select>
+        </div>
+        {/* Adding the job details below- Add,Edit/Update,Delete button */}
+        {jobs.length === 0 ? (
+          <div className="rounded-2xl bg-white p-6 shadow-sm border text-slate-600">
+            No jobs found.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* For one item in the job only */}
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="rounded-2xl bg-white p-4 shadow-sm border"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    {/* Jobs display */}
+                    <p className="font-semibold">{job.company}</p>
+                    <p className="text-sm text-slate-600">{job.role}</p>
+                    <p className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold">
+                      {job.status}
+                    </p>
+                  </div>
+                  {/*Button of edit ann delete */}
+                  <div className="flex gap-2">
+                    <button
+                      className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:opacity-90"
+                      onClick={() => startEdit(job)}
+                    >
+                      Edit
+                    </button>
+                    {/* Delete button */}
+                    <button
+                      className="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:opacity-90"
+                      onClick={() => handleDelete(job.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                {/* Editing form below */}
+                {editingId === job.id && (
+                  <form
+                    onSubmit={handleUpdateJob}
+                    className="mt-4 grid gap-3 md:grid-cols-5"
                   >
-                    <option>Applied</option>
-                    <option>Interviewing</option>
-                    <option>Rejected</option>
-                    <option>Offer</option>
-                  </select>
+                    <input
+                      className="rounded-lg border p-2 md:col-span-1"
+                      value={editCompany}
+                      onChange={(e) => setEditCompany(e.target.value)}
+                      placeholder="Company"
+                    />
+                    <input
+                      className="rounded-lg border p-2 md:col-span-1"
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value)}
+                      placeholder="Role"
+                    />
 
-                  <input
-                    type="date"
-                    value={editApplicationDate}
-                    onChange={(e) => setEditApplicationDate(e.target.value)}
-                  />
+                    <select
+                      className="rounded-lg border p-2 md:col-span-1"
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value)}
+                    >
+                      <option>Applied</option>
+                      <option>Interviewing</option>
+                      <option>Rejected</option>
+                      <option>Offer</option>
+                    </select>
 
-                  <textarea
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
-                  />
+                    <input
+                      className="rounded-lg border p-2 md:col-span-1"
+                      type="date"
+                      value={editApplicationDate}
+                      onChange={(e) => setEditApplicationDate(e.target.value)}
+                    />
 
-                  <button type="submit">Save</button>
-                  <button type="button" onClick={cancelEdit}>
-                    Cancel
-                  </button>
-                </form>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      {/* Adding the add job functionality  below*/}
-      <form onSubmit={handleAddJob}>
-        <input
-          placeholder="Company"
-          // Get the value from the state
-          value={company}
-          // On the event of typing send the value to set and update the comapny state
-          onChange={(e) => setCompany(e.target.value)}
-        />
-        <input
-          placeholder="Role"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        />
-        <input
-          type="date"
-          value={applicationDate}
-          onChange={(e) => setApplicationDate(e.target.value)}
-        />
-        {/* Create dropdown */}
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option>Applied</option>
-          <option>Interviewing</option>
-          <option>Rejected</option>
-          <option>Offer</option>
-        </select>
-        {/* Area for notes */}
-        <textarea
-          placeholder="Notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-        <button>Add Job</button>
-      </form>
+                    <textarea
+                      className="rounded-lg border p-2 md:col-span-4"
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      placeholder="Notes"
+                    />
+
+                    <div className="md:col-span-5 flex gap-2">
+                      <button
+                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:opacity-90"
+                        type="submit"
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="rounded-lg bg-slate-200 px-4 py-2 text-sm hover:opacity-90"
+                        type="button"
+                        onClick={cancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Adding the add job functionality  below*/}
+        <div className="rounded-2xl bg-white p-5 shadow-sm border">
+          <h3 className="text-lg font-semibold">Add a job</h3>
+          {/* Submit the form */}
+          <form
+            onSubmit={handleAddJob}
+            className="mt-4 grid gap-3 md-grid-col-5"
+          >
+            <input
+              className="rounded-lg borders p-2"
+              placeholder="Company"
+              // Get the value from the state
+              value={company}
+              // On the event of typing send the value to set and update the comapny state
+              onChange={(e) => setCompany(e.target.value)}
+            />
+            <input
+              className="rounded-lg borders p-2"
+              placeholder="Role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            />
+            <input
+              className="rounded-lg borders p-2"
+              type="date"
+              value={applicationDate}
+              onChange={(e) => setApplicationDate(e.target.value)}
+            />
+            {/* Create dropdown */}
+            <select
+              className="rounded-lg borders p-2"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option>Applied</option>
+              <option>Interviewing</option>
+              <option>Rejected</option>
+              <option>Offer</option>
+            </select>
+            {/* Area for notes */}
+            <textarea
+              className="rounded-lg b-slate-900 px-4 py-2 text-black hover:opacity-90"
+              placeholder="Notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+            <button className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition">
+              Add Job
+            </button>
+          </form>
+          {/* <div className="bg-red-500 text-white p-10">Tailwind Working</div> */}
+        </div>
+      </div>
     </div>
   );
 }

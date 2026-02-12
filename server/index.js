@@ -107,7 +107,8 @@ app.post("/api/jobs", async (req, res) => {
       .status(200)
       .json({ message: "Job created Successfully!,Check db" });
   } catch (error) {
-    return res.status(500).json({ error: "Server Error" });
+    return;
+    res.status(500).json({ error: "Server Error" });
   }
 });
 // Updating the jobs if there any changes in it
@@ -123,15 +124,22 @@ app.put("/api/jobs/:id", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("jobs")
-      .update({ id, company, role, status, applicationDate, notes })
+      .update({ company, role, status, applicationDate, notes })
       .eq("id", jobsId)
-      .select();
-    if (!data || data.length === 0) {
+      .select()
+      .single();
+
+    // Checking for the error
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (!data) {
       return res.status(404).json({ error: "No Matching Id." });
     }
-    return res.status(200).json({ message: "Job updated sucessfully", data });
+    // Return the updated data only
+    return res.status(200).json(data);
   } catch (error) {
-    return res.status(500).json({ error: "Error" });
+    return res.status(500).json({ error: error.message });
   }
 });
 // Creating the Delete route api
