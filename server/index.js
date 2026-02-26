@@ -158,7 +158,7 @@ app.post("/api/jobs", requireAuth, async (req, res) => {
   }
 });
 // Updating the jobs if there any changes in it
-app.put("/api/jobs/:id", requireAuth, async (req, res) => {
+app.put("/api/jobs/:id", equireAuth, async (req, res) => {
   // Get the inputs
   const { company, role, status, applicationDate, notes } = req.body;
   const jobsId = req.params.id;
