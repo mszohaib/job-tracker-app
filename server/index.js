@@ -1,10 +1,10 @@
 // Importing pool mutiple db connections to get the data from the db.
+require("dotenv").config();
 const { supabase } = require("./connections/supabase.js");
 //import hashing pass packagen
 const bcrypt = require("bcrypt");
 const PORT = 5000;
 //imoprting the JWT tokens to verify the auth
-require("dotenv").config();
 const jwt = require("jsonwebtoken");
 // importing express lib
 const express = require("express");
@@ -46,11 +46,11 @@ app.get("/api/health", requireAuth, async (req, res) => {
 // Add the post route for user signup/register
 app.post("/api/register", async (req, res) => {
   // Get data from the frontend
-  const { email, password } = req.body;
+  const { name,email, password } = req.body;
 
   //   condition to checkif any of the above is missing
   // Validate missing fields
-  if (!email || !password) {
+  if (!name ||!email || !password) {
     return res.status(400).json({ error: "All of the fields are required!!" });
   }
   // Dupicate Email checking:- //The data is the values that you want from db which is id
@@ -71,7 +71,7 @@ app.post("/api/register", async (req, res) => {
   //Insert the new user if the email is not there in db
   const { data: insertData, error: insertError } = await supabase
     .from("users")
-    .insert({ email, password_hash: hashedPassword })
+    .insert({ name, email, password_hash: hashedPassword })
     .select("id")
     .single();
 
@@ -145,7 +145,7 @@ app.post("/api/jobs", requireAuth, async (req, res) => {
         status,
         applicationDate,
         notes,
-        user_id: req.userId,
+        user_id: req.userId,s
       })
       .select()
       .single();
@@ -158,7 +158,7 @@ app.post("/api/jobs", requireAuth, async (req, res) => {
   }
 });
 // Updating the jobs if there any changes in it
-app.put("/api/jobs/:id", equireAuth, async (req, res) => {
+app.put("/api/jobs/:id", requireAuth, async (req, res) => {
   // Get the inputs
   const { company, role, status, applicationDate, notes } = req.body;
   const jobsId = req.params.id;
