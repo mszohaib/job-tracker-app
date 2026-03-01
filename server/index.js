@@ -107,12 +107,15 @@ app.post("/api/login", async (req, res) => {
     return res.status(500).json({ message: `There is an error ${error}` });
   }
   if (data.length === 0) {
+    console.log("login  debug - user found,",data.lengt>0,"email",email);
     return res.status(401).json({ message: "Invalid credentials!" });
   }
+  console.log("Login debug - password_hash exists:", !!data[0]?.password_hash);
   //Compare the passwords with hash passwords
   const isMatch = await bcrypt.compare(password, data[0].password_hash);
+  console.log("Login debug - password match:", isMatch);
   if (!isMatch) {
-    return res.status(401).json({ message: "invalid credentials" });
+    return res.status(401).json({ message: "Invalid credentials" });
   }
   // Creating the token with the data in it
   const token = jwt.sign(
@@ -145,7 +148,7 @@ app.post("/api/jobs", requireAuth, async (req, res) => {
         status,
         applicationDate,
         notes,
-        user_id: req.userId,s
+        user_id: req.userId,
       })
       .select()
       .single();
