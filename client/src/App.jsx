@@ -84,7 +84,7 @@ function App() {
       // Refresh jobs after successful delete
       fetchJobs();
     } catch (err) {
-      alert(err.message);
+      setError(err.message)
     }
   };
   // Adding the add jobs function for the ui to add
@@ -95,7 +95,7 @@ function App() {
     setError(""); // clear old errors
 
     if (!company.trim() || !role.trim() || !applicationDate || !status) {
-      alert("Company, Role, Application Date and status are required.");
+      setError("Company, Role, Application Date and status are required.");
       return;
     }
     // Get response from server
@@ -118,7 +118,7 @@ function App() {
     // checkin for error
     if (!response.ok) {
       console.log("Add function error:-", newJob);
-      return alert(newJob?.error || "Failed to create job");
+      return setError(newJob?.error || "Failed to create job");
     }
     //Update the state with the new job added by user
     await fetchJobs(); // refresh from DB instead
@@ -162,7 +162,7 @@ function App() {
       }),
     });
     if (!response.ok) {
-      alert("Update failed");
+      setError("Update failed");
       return;
     }
     // Get the data from the backend for using it in the frontend
@@ -259,6 +259,7 @@ function App() {
             )}
             <input
               className="border p-2 w-full rounded"
+              type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -319,6 +320,8 @@ function App() {
         Error loading jobs: {error}. You can still add new jobs below.
       </p>
     )}
+    <div className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 px-6 py4">
+    <div className="max-w-7xl mx-auto flex justify-between items-center">
       <h2 className="text-2xl font-bold">My Job Applications</h2>
       {/* Adding the logout button */}
 
@@ -327,11 +330,12 @@ function App() {
           localStorage.removeItem("token");
           setToken(null);
         }}
-        className="bg-red-500 text-white px-3 py-2 rounded"
+        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
       >
         Logout
       </button>
-
+      </div>
+    </div>
       {/* Three column layout */}
       <div className="mx-auto max-w-7xl p-6">
         <div className="grid lg:grid-cols-3 gap-6">
@@ -339,8 +343,8 @@ function App() {
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold">My Job Applications</h2>
-              <p className="text-sm text-slate-600">
+              
+              <p className="text-base text-slate-600">
                 Track, update and manage your applications.
               </p>
             </div>
