@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-const API_URL = import.meta.env.VITE_API_URL;
+// VITE_API_URL must be set in Vercel (e.g. https://your-app.onrender.com) — no trailing slash
+const API_URL = String(import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 function App() {
   // Use state hooks of reacts
   const [jobs, setJobs] = useState([]);
@@ -39,6 +40,13 @@ function App() {
   // Getting the jobs function
   const fetchJobs = async () => {
     if (!token) return;
+    if (!API_URL) {
+      setLoading(false);
+      setError(
+        "Missing VITE_API_URL. Add it in Vercel (your Render backend URL, https, no trailing slash).",
+      );
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -177,6 +185,12 @@ function App() {
   const handleLogin = async (event) => {
     // Stop the page loading and clearing
     event.preventDefault();
+    if (!API_URL) {
+      setAuthError(
+        "Missing API URL. Set VITE_API_URL in Vercel to your Render backend (https://…).",
+      );
+      return;
+    }
 
     const response = await fetch(`${API_URL}/api/login`, {
       method: "POST",
@@ -201,6 +215,12 @@ function App() {
     // basic validation
     if (!name.trim()||!email.trim() || !password.trim()) {
       setAuthError("Name, Email and password are required.");
+      return;
+    }
+    if (!API_URL) {
+      setAuthError(
+        "Missing API URL. Set VITE_API_URL in Vercel to your Render backend (https://…).",
+      );
       return;
     }
 

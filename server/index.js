@@ -3,7 +3,8 @@ require("dotenv").config();
 const { supabase } = require("./connections/supabase.js");
 //import hashing pass packagen
 const bcrypt = require("bcrypt");
-const PORT = 5000;
+// Render and other hosts assign PORT; local dev uses 5000
+const PORT = process.env.PORT || 5000;
 //imoprting the JWT tokens to verify the auth
 const jwt = require("jsonwebtoken");
 // importing express lib
@@ -12,8 +13,14 @@ const express = require("express");
 const cors = require("cors");
 // middlewares
 const app = express();
-// Applying CORS middleware
-app.use(cors());
+// Allow browser requests from Vercel, localhost, etc.
+app.use(
+  cors({
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 // Applying the text to json converter to every request recived
 app.use(express.json());
 // Adding the authentication middleware between resquest and response
